@@ -3,14 +3,13 @@
  * Date   : 20.08.2025
  * But    : Jeu Yahtzee en Java
  */
-import java.util.Arrays;
 import java.util.Scanner;
 
 public class YahtzeeProcedural {
 
     // Lance un dé
     public static int lancerDe() {
-        return (int)(Math.random() * 6 + 1);
+        return (int) (Math.random() * 6 + 1);
     }
 
     // Lance tous les dés
@@ -61,16 +60,7 @@ public class YahtzeeProcedural {
         return occurrences;
     }
 
-    // Vérifie si une face apparait
-    public static boolean contientN(int[] occurrences, int n) {
-        for (int compte : occurrences) {
-            if (compte >= n)
-                return true;
-        }
-        return false;
-    }
-
-    // Vérifie si c’est un full house
+    // Vérifie si c'est un full house
     public static boolean estFullHouse(int[] occurrences) {
         boolean aTrois = false;
         boolean aDeux = false;
@@ -83,23 +73,32 @@ public class YahtzeeProcedural {
         return aTrois && aDeux;
     }
 
-
-
-    // Vérifie si c’est une petite suite
+    // Vérifie si c'est une petite suite
     public static boolean estPetiteSuite(int[] occurrences) {
         return contientSuite(occurrences, 4);
     }
 
-    // Vérifie si c’est une grande suite
+    // Vérifie si c'est une grande suite
     public static boolean estGrandeSuite(int[] occurrences) {
         return contientSuite(occurrences, 5);
+    }
+
+    // Vérifie s'il y a deux paires différentes
+    public static boolean estDoublePaire(int[] occurrences) {
+        int nombreDePaires = 0;
+        for (int compte : occurrences) {
+            if (compte == 2) {
+                nombreDePaires++;
+            }
+        }
+        return nombreDePaires >= 2;
     }
 
     // Détecte une suite de valeurs consécutives
     public static boolean contientSuite(int[] occurrences, int longueur) {
         int compte = 0;
-        for (int i = 0; i < occurrences.length; i++) {
-            if (occurrences[i] > 0) {
+        for (int occurrence : occurrences) {
+            if (occurrence > 0) {
                 compte++;
                 if (compte >= longueur)
                     return true;
@@ -109,31 +108,150 @@ public class YahtzeeProcedural {
         }
         return false;
     }
-    // Afficher uniquement les combinaisons en
-    // Calcule et affiche les scores
-    public static void calculerScore(int[] des) {
-        int[] occ = compterOccurrences(des);
 
-        System.out.println("Yahtzee (5 identiques) : " + (contientN(occ, 5) ? " +50 pts" : "X"));
-        System.out.println("Carré (4 identiques) : " + (contientN(occ, 4) ? " +40 pts" : "X"));
-        System.out.println("Paire (2 identiques) : " + (contientN(occ, 2) ? " +40 pts" : "X"));
-        System.out.println("Brelan (3 identiques) : " + (contientN(occ, 3) ? " +30 pts" : "X"));
-        System.out.println("Full House (3 + 2) : " + (estFullHouse(occ) ? " +25 pts" : "X"));
-        System.out.println("Petite Suite (4 consécutifs) : " + (estPetiteSuite(occ) ? " +30 pts" : "X"));
-        System.out.println("Grande Suite (5 consécutifs) : " + (estGrandeSuite(occ) ? " +40 pts" : "X"));
+    // Afficher uniquement les combinaisons disponibles avec leurs scores
+    public static void afficherCombinaisonsDisponibles(int[] des, boolean[] combinaisonsUtilisees) {
+        String[] lesCombinaisons = {"Paire", "Double Paire", "Brelan", "Carré", "Full House", "Petite Suite", "Grande Suite", "Yahtzee"};
+
+        System.out.println("\n--- COMBINAISONS DISPONIBLES ---");
+        int index = 1;
+        for (int i = 0; i < lesCombinaisons.length; i++) {
+            if (!combinaisonsUtilisees[i]) {
+                int score = calculerScoreCombinaison(des, i);
+                System.out.println(index + ". " + lesCombinaisons[i] + " : " + score + " pts");
+                index++;
+            }
+        }
+
+        if (index == 1) {
+            System.out.println("Toutes les combinaisons ont été utilisées ");
+        }else{
+            System.out.println("Vous devez choisir une combinaison disponible ");
+        }
     }
 
-    // Fonction principale
-    public static void main(String[] args) {
-        int[] resultatDes = lancerTousLesDes(5);
-        for (int i = 0; i < 3; i++) {
-            System.out.println("Phase " + (i + 1));
-            afficherDes(resultatDes);
-            String entree = lireEntreeUtilisateur();
-            relancerDes(resultatDes, entree);
+    // Calcule le score pour une combinaison spécifique
+    public static int calculerScoreCombinaison(int[] des, int typeCombinaison) {
+        int[] occ = compterOccurrences(des);
+
+        switch (typeCombinaison) {
+            case 0: // Paire
+                for (int compte : occ) {
+                    if (compte >= 2) return 5;
+                }
+                return 0;
+
+            case 1:
+                return estDoublePaire(occ) ? 10 : 0;
+
+            case 2: // Brelan
+                for (int i = 0; i < occ.length; i++) {
+                    if (occ[i] >= 3) {
+                        return (i + 1) * 3;
+                    }
+                }
+                return 0;
+
+            case 3: // Carré
+                for (int i = 0; i < occ.length; i++) {
+                    if (occ[i] >= 4) {
+                        return (i + 1) * 4;
+                    }
+                }
+                return 0;
+
+            case 4:
+                return estFullHouse(occ) ? 25 : 0;
+
+            case 5:
+                return estPetiteSuite(occ) ? 30 : 0;
+
+            case 6:
+                return estGrandeSuite(occ) ? 40 : 0;
+
+            case 7: // Yahtzee
+                for (int compte : occ) {
+                    if (compte == 5) return 50;
+                }
+                return 0;
+
+            default:
+                return 0;
         }
-        System.out.println("Résultat final :");
-        afficherDes(resultatDes);
-        calculerScore(resultatDes);
+    }
+
+    // Choisir une combinaison puis la retire
+    public static int choisirCombinaison(Scanner scanner, boolean[] combinaisonsUtilisees, int[] des) {
+        String[] lesCombinaisons = {"Paire", "Double Paire", "Brelan", "Carré", "Full House", "Petite Suite", "Grande Suite", "Yahtzee"};
+
+        // Afficher les combinaisons disponibles
+        int[] choixDisponibles = new int[8];
+        int nombreDisponibles = 0;
+
+        for (int i = 0; i < combinaisonsUtilisees.length; i++) {
+            if (!combinaisonsUtilisees[i]) {
+                choixDisponibles[nombreDisponibles] = i;
+                nombreDisponibles++;
+            }
+        }
+
+        System.out.print("Choisissez une combinaison à utiliser (1-" + nombreDisponibles + ") : ");
+        int choix = scanner.nextInt() - 1;
+
+        while (choix < 0 || choix >= nombreDisponibles) {
+            System.out.print("Choix invalide. Veuillez réessayer (1-" + nombreDisponibles + ") : ");
+            choix = scanner.nextInt() - 1;
+        }
+
+        int combinaisonChoisie = choixDisponibles[choix];
+        combinaisonsUtilisees[combinaisonChoisie] = true;
+        System.out.println("\nVous avez choisi : " + lesCombinaisons[combinaisonChoisie]);
+        return calculerScoreCombinaison(des, combinaisonChoisie);
+    }
+
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        boolean[] combinaisonsUtilisees = new boolean[8];
+        int scoreTotal = 0;
+        int manche = 1;
+        
+        while (manche <= 5) {
+            System.out.println("\n---- MANCHE " + manche + " ----");
+            int[] resultatDes = lancerTousLesDes(5);
+
+            for (int i = 0; i < 2; i++) {
+                System.out.println("\nPhase " + (i + 1));
+                afficherDes(resultatDes);
+                String entree = lireEntreeUtilisateur();
+
+                if (entree.trim().equals("0")) {
+                    break;
+                }
+
+                relancerDes(resultatDes, entree);
+            }
+
+
+            System.out.println("\nRésultat final :");
+            afficherDes(resultatDes);
+
+            // Affichage des combinaisons disponibles avec scores
+            afficherCombinaisonsDisponibles(resultatDes, combinaisonsUtilisees);
+
+            int scoreObtenu = choisirCombinaison(scanner, combinaisonsUtilisees, resultatDes);
+            if (scoreObtenu >= 0) {
+                scoreTotal += scoreObtenu;
+            } else {
+                break;
+            }
+            // Affiche le score apres chaque manche
+            System.out.println("\nScore total actuel : " + scoreTotal + " pts");
+            manche++;
+        }
+        System.out.println("Score final : " + scoreTotal + " pts");
+
+        
+        scanner.close();
     }
 }
